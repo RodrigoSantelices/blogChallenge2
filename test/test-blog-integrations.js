@@ -18,7 +18,14 @@ function seedBlogPostData(){
   const seedData = [];
 
   for (let i=1; i<=10; i++) {
-    seedData.push(generateBlogPostData());
+    seedData.push({
+    author:{
+      firstName: faker.name.firstName(),
+      lastName: faker.name.lastName()},
+
+      title:faker.lorem.sentence(),
+      content:faker.lorem.text()
+    });
   }
   return BlogPost.insertMany(seedData);
 }
@@ -52,12 +59,12 @@ function generateBlogPostData(){
 
 function tearDownDb(){
   console.warn('Deleting Database');
-  return mongoose.connection.dropDataBase();
+  return mongoose.connection.dropDatabase();
 }
 
 describe('BlogPost API Resource', function(){
   before(function(){
-    return runSever(TEST_DATABASE_URL);
+    return runServer(TEST_DATABASE_URL);
   });
   beforeEach(function(){
     return seedBlogPostData();
@@ -76,7 +83,7 @@ describe('BlogPost API Resource', function(){
     it('should return all existing restaurants', function(){
 
       let res;
-      return chai.reques(app)
+      return chai.request(app)
       .get('/posts')
       .then(function(_res){
         res = _res;
@@ -193,7 +200,7 @@ describe('BlogPost API Resource', function(){
           return BlogPost.findById(post.id);
         })
         .then(function(_post) {
-          expect(_post.to.be.null;
+          expect(_post.to.be.null);
         });
     });
 });
