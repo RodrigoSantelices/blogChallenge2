@@ -4,7 +4,7 @@ const chai = require('chai');
 const chaiHttp = require('chai-http');
 const faker = require('faker');
 const mongoose = require('mongoose');
-
+const should = chai.should();
 const expect = chai.expect;
 
 const {BlogPost} = require('../models');
@@ -30,32 +30,6 @@ function seedBlogPostData(){
   return BlogPost.insertMany(seedData);
 }
 
-function generateTitle(){
-  const titles =
-  ['My first database', 'Second Database','Third Database', 'Final approach'];
-  return titles[Math.floor(Math.random()*titles.length)];
-}
-
-function generateContent(){
-  const content =
-  ['What should go here?', 'just chunks of text', 'Now they are just questions'];
-  return content[Math.floor(Math.random()*content.length)];
-}
-
-function generateAuthor(){
-  const author = ['Bill Kingsley', 'Jenny from the Block', 'Arthur Pendragon'];
-  return author[Math.floor(Math.random()*author.length)]
-}
-
-// Generates an object representing a blog post
-
-function generateBlogPostData(){
-  return {
-    title: generateTitle(),
-    content: generateContent(),
-    author: generateAuthor()
-  }
-}
 
 function tearDownDb(){
   console.warn('Deleting Database');
@@ -81,18 +55,17 @@ describe('BlogPost API Resource', function(){
   describe('GET endpoint', function(){
 
     it('should return all existing restaurants', function(){
-
       let res;
       return chai.request(app)
       .get('/posts')
-      .then(function(_res){
+      .then(_res =>{
         res = _res;
-        expect(res).to.have.status(200);
-        expect(res.body.posts).to.have.length.of.at.least(1);
+        res.should.have.status(200);
+        res.body.should.have.lengthOf.at.least(1);
         return BlogPost.count();
       })
-      .then(function(count){
-        expect(res.body.posts).to.have.length.of(count);
+      .then(count =>{
+        res.body.should.have.lengthOf(count);
       });
     });
 
@@ -103,22 +76,22 @@ describe('BlogPost API Resource', function(){
       .then(function(res){
         expect(res).to.have.status(200);
         expect(res).to.be.json;
-        expect(res.body.posts).to.be.a('array');
-        expect(res.body.posts).to.have.length.of.at.least(1);
+        expect(res.body).to.be.a('array');
+        expect(res.body).to.have.length.of.at.least(1);
 
-        res.body.restaurants.forEach(function(post){
+        res.body.forEach(function(post){
           expect(post).to.be.a('object');
           expect(post).to.include.keys(
             'id','title','content','author');
         });
-        resBlogPost = res.body.posts[0];
+        resBlogPost = res.body[0];
         return BlogPost.findById(resBlogPost.id);
       })
-      .then(function(post){
+      .then(post =>{
         expect(resBlogPost.id).to.equal(post.id);
         expect(resBlogPost.title).to.equal(post.title);
         expect(resBlogPost.content).to.equal(post.content);
-        expect(resBlogPost.author).to.equal(post.author);
+        expect(resBlogPost.author).to.equal(post.authorName);
       });
     });
   });
@@ -127,8 +100,15 @@ describe('BlogPost API Resource', function(){
 
     it('should add a new blog post', function() {
 
-      const newPost = generateBlogPostData();
-      let mostRecentGrade;
+      const newPost = {
+        title: faker.lorem.sentence(),
+        author: {
+          firstName: faker.name.firstName(),
+          lastName: faker.name.lastName(),
+        },
+        content: faker.lorem.text()
+      };
+
 
       return chai.request(app)
         .post('/posts')
@@ -142,14 +122,14 @@ describe('BlogPost API Resource', function(){
           expect(res.body.title).to.equal(newPost.title);
           expect(res.body.id).to.not.be.null;
           expect(res.body.content).to.equal(newPost.content);
-          expect(res.body.author).to.equal(newPost.author);
+          expect(res.body.author).to.equal(`${newPost.author.firstName} ${newPost.author.lastName}`);
 
           return BlogPost.findById(res.body.id);
         })
         .then(function(post) {
           expect(post.title).to.equal(newPost.title);
           expect(post.content).to.equal(newPost.content);
-          expect(post.author).to.equal(newPost.author);
+          expect(post.author.firstName).to.equal(newPost.author.firstName);
         });
     });
   });
@@ -200,7 +180,7 @@ describe('BlogPost API Resource', function(){
           return BlogPost.findById(post.id);
         })
         .then(function(_post) {
-          expect(_post.to.be.null);
+          expect(_post).to.be.null;
         });
     });
 });
